@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "addLabels": ["dependencies"],
+  "autoApprove": true,
+  "automerge": true,
+  "automergeType": "pr",
+  "semanticCommits": "enabled",
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Non-Breaking Updates",
+      "groupSlug": "non-breaking-updates"
+    }
+  ]
+}
