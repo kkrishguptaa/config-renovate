@@ -9,7 +9,6 @@
   "packageRules": [
     {
       "matchPackagePatterns": ["*"],
-      "matchUpdateTypes": ["minor", "patch"],
       "groupName": "Non-Breaking Updates",
       "groupSlug": "non-breaking-updates"
     }
