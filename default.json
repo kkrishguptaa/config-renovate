@@ -9,8 +9,8 @@
   "packageRules": [
     {
       "matchPackagePatterns": ["*"],
-      "groupName": "Non-Breaking Updates",
-      "groupSlug": "non-breaking-updates"
+      "groupName": "Dependencies",
+      "groupSlug": "dependency-updates"
     }
   ]
 }
