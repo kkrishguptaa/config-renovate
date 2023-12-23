@@ -1,7 +1,10 @@
 name: Merge Renovate PRs
 on:
+  push:
+    paths:
+      - '.github/workflows/merge.yml'
   schedule:
-    - cron: '30 0 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -17,14 +20,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { data } = await github.search.issuesAndPullRequests({
-              q: 'owner:xkrishguptaa is:pr is:open label:"dependencies"',
+            const { data } = await github.rest.search.issuesAndPullRequests({
+              q: `owner:${context.repo.owner} is:pr is:open label:"dependencies"`,
               sort: 'created'
             })
 
             const prs = data.items.map(item => {
               return {
-                repository: item.repository_url.replace('https://api.github.com/repos/', ''),
+                repo: item.repository_url.replace('https://api.github.com/repos/', ''),
                 number: item.number
               }
             })
@@ -44,9 +47,9 @@ jobs:
             const prs = ${{ needs.find-prs.outputs.prs }}
 
             for (const pr of prs) {
-              await github.pulls.createReview({
-                owner: pr.split('/')[0],
-                repo: pr.split('/')[1],
+              await github.rest.pulls.createReview({
+                owner: pr.repo.split('/')[0],
+                repo: pr.repo.split('/')[1],
                 pull_number: pr.number,
                 event: 'APPROVE'
               })
@@ -67,16 +70,16 @@ jobs:
             const prs = ${{ needs.find-prs.outputs.prs }}
 
             for (const pr of prs) {
-              await github.pulls.merge({
-                owner: pr.split('/')[0],
-                repo: pr.split('/')[1],
+              await github.rest.pulls.merge({
+                owner: pr.repo.split('/')[0],
+                repo: pr.repo.split('/')[1],
                 pull_number: pr.number,
                 merge_method: 'squash'
               })
 
-              await github.issues.createComment({
-                owner: pr.split('/')[0],
-                repo: pr.split('/')[1],
+              await github.rest.issues.createComment({
+                owner: pr.repo.split('/')[0],
+                repo: pr.repo.split('/')[1],
                 issue_number: pr.number,
                 body: '**Automatically merged by [GitHub Actions](https://github.com/${{ github.repository }})/actions/runs/${{ github.run_id }}**'
               })
