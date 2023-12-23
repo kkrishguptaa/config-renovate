@@ -1,7 +1,11 @@
 name: Validate renovate.yaml
 on:
   pull_request:
+    paths:
+      - default.json
   push:
+    paths:
+      - default.json
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
@@ -13,6 +17,6 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4
         with:
-          node-version: 20
+          node-version: latest
       - run: npm install -g renovate
       - run: renovate-config-validator default.json
