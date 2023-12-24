@@ -93,7 +93,7 @@ jobs:
       - name: Comment PRs
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         with:
-          github-token: ${{ secrets.GH_OWNER_TOKEN }}
+          github-token: ${{ secrets.GH_BOT_TOKEN }}
           script: |
             const prs = ${{ needs.find-prs.outputs.prs }}
 
