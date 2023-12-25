@@ -26,6 +26,10 @@ Make a file in root named `renovate.json`
 
 ## ✨ Features
 
+### Merge Automatically
+
+This repo has a GitHub Action that will automatically merge the PRs created by Renovate. It runs every 6 hours.
+
 ### Uses `config:best-practices` preset
 
 Implements all [`best-practices`](https://docs.renovatebot.com/presets-config/#configbest-practices) set by Renovate maintainers by using their preset!
