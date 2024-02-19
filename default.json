@@ -14,7 +14,6 @@
   ],
   "prConcurrentLimit": 1,
   "rebaseWhen": "behind-base-branch",
-  "schedule": ["daily"],
   "semanticCommits": "enabled",
   "separateMajorMinor": false,
   "separateMinorPatch": false
