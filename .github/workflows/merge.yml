@@ -64,7 +64,7 @@ jobs:
             for (const pr of prs) {
               core.startGroup(`${pr.repo}#${pr.number}`)
 
-              await exec.exec('gh', ['pr', `-R=${pr.repo}"`, 'merge', `${pr.number}`, '--admin', '--squash', '--delete-branch']);
+              await exec.exec('gh', ['pr', `-R=${pr.repo}`, 'merge', `${pr.number}`, '--admin', '--squash', '--delete-branch']);
 
               core.info(`Merged PR #${pr.number}`)
 
