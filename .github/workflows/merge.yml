@@ -12,105 +12,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  find-prs:
-    runs-on: ubuntu-latest
-
-    outputs:
-      lgtm-prs: ${{ fromJson(steps.find-prs.outputs.result).lgtm }}
-      failed-prs: ${{ fromJson(steps.find-prs.outputs.result).failed }}
-
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-
-      - name: prs.find()
-        id: find-prs
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data } = await github.rest.search.issuesAndPullRequests({
-              q: `owner:${context.repo.owner} is:pr is:open label:"dependencies"`,
-              sort: 'created'
-            });
-
-            core.info(`Found ${data.total_count} PRs`);
-
-            const prs = data.items.map(item => {
-              return {
-                repo: item.repository_url.replace('https://api.github.com/repos/', ''),
-                number: item.number,
-                url: item.html_url
-              };
-            });
-
-            const lgtmPRs = [];
-            const failedPRs = [];
-
-            for (const pr of prs) {
-              core.startGroup(`checking PR #${pr.number}`);
-
-              const { data: checkRuns } = await github.rest.checks.listForRef({
-                owner: pr.repo.split('/)[0],
-                repo: pr.repo.split('/)[1],
-                ref: `pull/${pr.number}/head`
-              });
-
-              const passedChecks = checkRuns.filter(check => check.conclusion === 'success').length;
-              const failedChecks = checkRuns.filter(check => check.conclusion !== 'success').length;
-
-              if (checkRuns.length === 0) {
-                core.warning(`PR #${pr.number} has no checks.`);
-              } else if (failedChecks === 0) {
-                lgtmPRs.push({
-                  repo: pr.repo,
-                  number: pr.number,
-                  url: pr.url,
-                  passedChecks: passedChecks,
-                  failedChecks: failedChecks
-                });
-
-                core.info(`PR #${pr.number} has all passed checks and no failed checks.`);
-              } else {
-                failedPRs.push({
-                  repo: pr.repo,
-                  number: pr.number,
-                  url: pr.url,
-                  passedChecks: passedChecks,
-                  failedChecks: failedChecks
-                });
-
-                core.info(`PR #${pr.number} has ${passedChecks} passed checks and ${failedChecks} failed checks.`);
-              }
-
-              core.endGroup();
-            }
-
-            const tableData = [...lgtmPRs, ...failedPRs].map(pr => {
-              return [
-                `[${pr.repo}#${pr.number}](${pr.url})`,
-                pr.passedChecks,
-                pr.failedChecks
-              ];
-            });
-
-            core.summary.addHeading('Summary');
-            core.summary.addTable([
-              { data: 'PR', header: true },
-              { data: 'Passed Checks', header: true },
-              { data: 'Failed Checks', header: true },
-              ...tableData.map(d => { return { data: d } }).flat()
-            ]);
-
-            core.summary.addRaw(`Found ${lgtmPRs.length} PRs with checks.`);
-
-            return { lgtm: lgtmPRs, failed: failedPRs };
-
-
   merge-prs:
     runs-on: ubuntu-latest
-    needs:
-      - find-prs
-
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -119,17 +22,9 @@ jobs:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         env:
           GH_TOKEN: ${{ secrets.GH_OWNER_TOKEN }}
+          TARGET: ${{ github.repository_owner }}
         with:
-          github-token: ${{ secrets.GH_OWNER_TOKEN }}
           script: |
-            const prs = ${{ needs.find-prs.outputs.lgtm-prs }}
+            const script = require('.github/scripts/merge');
 
-            for (const pr of prs) {
-              core.startGroup(`${pr.repo}#${pr.number}`)
-
-              await exec.exec('gh', ['pr', `-R=${pr.repo}`, 'merge', `${pr.number}`, '--admin', '--squash', '--delete-branch']);
-
-              core.info(`Merged PR #${pr.number}`)
-
-              core.endGroup()
-            }
+            await script({ core, github, exec })
