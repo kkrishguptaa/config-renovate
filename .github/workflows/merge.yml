@@ -50,8 +50,8 @@ jobs:
               core.startGroup(`checking PR #${pr.number}`);
 
               const { data: checkRuns } = await github.rest.checks.listForRef({
-                owner: pr.repo.split('/)[0],
-                repo: pr.repo.split('/)[1],
+                owner: pr.repo.split('/')[0],
+                repo: pr.repo.split('/')[1],
                 ref: `pull/${pr.number}/head`
               });
 
@@ -104,7 +104,6 @@ jobs:
             core.summary.addRaw(`Found ${lgtmPRs.length} PRs with checks.`);
 
             return { lgtm: lgtmPRs, failed: failedPRs };
-
 
   merge-prs:
     runs-on: ubuntu-latest
