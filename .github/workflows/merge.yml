@@ -47,64 +47,64 @@ jobs:
             const failedPRs = [];
 
             for (const pr of prs) {
-              core.startGroup(`checking PR #${pr.number}`);
+              core.startGroup(`${pr.repo}#${pr.number}`)
 
-              const { data: checkRuns } = await github.rest.checks.listForRef({
-                owner: pr.repo.split('/)[0],
-                repo: pr.repo.split('/)[1],
-                ref: `pull/${pr.number}/head`
+              const { check_runs: checks,  } = await github.paginate(github.rest.checks.listForRef, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `pull/${pr.number}/merge`
               });
 
-              const passedChecks = checkRuns.filter(check => check.conclusion === 'success').length;
-              const failedChecks = checkRuns.filter(check => check.conclusion !== 'success').length;
-
-              if (checkRuns.length === 0) {
-                core.warning(`PR #${pr.number} has no checks.`);
-              } else if (failedChecks === 0) {
-                lgtmPRs.push({
-                  repo: pr.repo,
-                  number: pr.number,
-                  url: pr.url,
-                  passedChecks: passedChecks,
-                  failedChecks: failedChecks
-                });
-
-                core.info(`PR #${pr.number} has all passed checks and no failed checks.`);
+              if (checks.length === 0) {
+                core.warn(`PR ${pr.repo}#${pr.number} has no checks`);
+                lgtmPRs.push(pr);
+                continue;
+              } if (checks.some(check => check.conclusion === 'failure')) {
+                core.info(`PR ${pr.repo}#${pr.number} has failed checks`);
+                failedPRs.push(pr);
               } else {
-                failedPRs.push({
-                  repo: pr.repo,
-                  number: pr.number,
-                  url: pr.url,
-                  passedChecks: passedChecks,
-                  failedChecks: failedChecks
-                });
-
-                core.info(`PR #${pr.number} has ${passedChecks} passed checks and ${failedChecks} failed checks.`);
+                core.info(`PR ${pr.repo}#${pr.number} has passed checks`);
+                lgtmPRs.push(pr);
               }
 
-              core.endGroup();
+              core.summary.addTable([
+                { data: 'Repo', header: true },
+                { data: 'PR', header: true },
+                { data: 'Status', header: true },
+                ...lgtmPRs.map(pr => {
+                  return [
+                    {
+                      data: pr.repo,
+                    },
+                    {
+                      data: `[${pr.number}](${pr.url})`,
+                      align: 'center'
+                    },
+                    {
+                      data: 'LGTM'
+                    }
+                  ]
+                }).flat(),
+                ...failedPRs.map(pr => {
+                  return [
+                    {
+                      data: pr.repo,
+                    },
+                    {
+                      data: `[${pr.number}](${pr.url})`,
+                      align: 'center'
+                    },
+                    {
+                      data: 'Failed'
+                    }
+                  ]
+                }).flat()
+              ])
+
+              core.endGroup()
             }
 
-            const tableData = [...lgtmPRs, ...failedPRs].map(pr => {
-              return [
-                `[${pr.repo}#${pr.number}](${pr.url})`,
-                pr.passedChecks,
-                pr.failedChecks
-              ];
-            });
-
-            core.summary.addHeading('Summary');
-            core.summary.addTable([
-              { data: 'PR', header: true },
-              { data: 'Passed Checks', header: true },
-              { data: 'Failed Checks', header: true },
-              ...tableData.map(d => { return { data: d } }).flat()
-            ]);
-
-            core.summary.addRaw(`Found ${lgtmPRs.length} PRs with checks.`);
-
-            return { lgtm: lgtmPRs, failed: failedPRs };
-
+            return { lgtm: lgtmPRs, failed: failedPRs }
 
   merge-prs:
     runs-on: ubuntu-latest
@@ -120,7 +120,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_OWNER_TOKEN }}
         with:
-          github-token: ${{ secrets.GH_OWNER_TOKEN }}
           script: |
             const prs = ${{ needs.find-prs.outputs.lgtm-prs }}
 
