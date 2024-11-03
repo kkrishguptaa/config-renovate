@@ -23,20 +23,20 @@ jobs:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         env:
           GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ github.repository_owner }}
         with:
           script: |
             const script = require('.github/scripts/find-prs');
 
-            return await script({ core, github, exec })
+            return await script({ core, github })
 
       - name: Merge PRs
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         env:
           GH_TOKEN: ${{ secrets.GH_OWNER_TOKEN }}
-          TARGET: ${{ github.repository_owner }}
         with:
           script: |
-            const { lgtmPRs, failedPRs } = ${{steps.find-prs.outputs.result}}
+            const { lgtmPRs, failedPRs } = ${{ steps.find-prs.outputs.result }};
 
             const script = require('.github/scripts/merge');
 
