@@ -2,9 +2,9 @@ name: merge
 on:
   push:
     paths:
-      - '.github/workflows/merge.yml'
+      - ".github/workflows/merge.yml"
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -18,6 +18,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
+      - name: Find PRs
+        id: find-prs
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          script: |
+            const script = require('.github/scripts/find-prs');
+
+            return await script({ core, github, exec })
+
       - name: Merge PRs
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         env:
@@ -25,6 +36,8 @@ jobs:
           TARGET: ${{ github.repository_owner }}
         with:
           script: |
+            const { lgtmPRs, failedPRs } = ${{steps.find-prs.outputs.result}}
+
             const script = require('.github/scripts/merge');
 
-            await script({ core, github, exec })
+            await script({ lgtmPRs, failedPRs }, { core, github, exec })
