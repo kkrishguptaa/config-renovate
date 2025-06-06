@@ -1,6 +1,7 @@
-//@ts-check
-/** @param {import('github-script').AsyncFunctionArguments} AsyncFunctionArguments */
-module.exports = async ({ core, github }) => {
+// @ts-check
+/**
+ * @param {import('github-script').AsyncFunctionArguments} AsyncFunctionArguments */
+module.exports = async ({ core, github, exec }) => {
   core.startGroup("Fetching PRs");
 
   const { data: search } = await github.rest.search.issuesAndPullRequests({
@@ -66,5 +67,35 @@ module.exports = async ({ core, github }) => {
     return;
   }
 
-  return { lgtmPRs: [...lgtmPRs], failedPRs: [...failedPRs] };
+  for (const pr of lgtmPRs) {
+    core.startGroup(`${pr.repo}#${pr.number}`);
+
+    const archived = await github.rest.repos
+      .get({ owner: pr.repo.split("/")[0], repo: pr.repo.split("/")[1] })
+      .then(({ data }) => data.archived);
+
+    if (archived) {
+      core.warning("Archived repository, skipping");
+      core.endGroup();
+      continue;
+    }
+
+    await exec.exec("gh", [
+      "pr",
+      `-R=${pr.repo}`,
+      "merge",
+      `${pr.number}`,
+      "--admin",
+      "--squash",
+      "--delete-branch",
+    ]);
+
+    core.info(`Merged PR #${pr.number}`);
+
+    core.endGroup();
+  }
+
+  core.notice(
+    `${lgtmPRs.length} PRs merged successfully ― ${failedPRs.length} retained due to check failure`
+  );
 };
