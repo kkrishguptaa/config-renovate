@@ -1,9 +1,9 @@
 {
 	"devDependencies": {
-		"@types/node": "^22.15.24",
+		"@types/node": "22.15.30",
 		"github-script": "github:actions/github-script"
 	},
 	"volta": {
-		"node": "20.19.2"
+		"node": "22.16.0"
 	}
 }
