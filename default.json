@@ -1,12 +1,16 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:best-practices", ":gitSignOff", ":disableDependencyDashboard"],
+  "extends": [
+    "config:best-practices",
+    ":gitSignOff",
+    ":disableDependencyDashboard"
+  ],
   "addLabels": ["dependencies"],
   "packageRules": [
     {
       "matchPackagePatterns": ["*"],
       "groupName": "Dependencies",
-      "groupSlug": "dependencies"
+      "groupSlug": "dependencies",
       "autoApprove": true,
       "automerge": true
     }
@@ -16,7 +20,7 @@
   },
   "minor": {
     "autoApprove": false,
-    "automerge": false,
+    "automerge": false
   },
   "osvVulnerabilityAlerts": true,
   "prConcurrentLimit": 1,
